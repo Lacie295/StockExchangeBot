@@ -149,12 +149,15 @@ def free_stocks(name, uid, amount):
 
 def buy_stock(name, uid, amount):
     acct = get_account(uid)
+    print(acct, get_company(name))
     if acct is None or get_company(name) is None:
         return 0
     price = get_price(name) * amount
+    print(price, acct, amount, get_free_stocks(name))
     if amount < get_free_stocks(name) and price <= acct:
         assign_stocks(name, uid, amount)
         withdraw(uid, price)
+        deposit(name, price * 0.1)
         return 1
     else:
         return 0
@@ -168,6 +171,7 @@ def sell_stock(name, uid, amount):
     if uid in stocks and amount < stocks[uid]:
         free_stocks(name, uid, amount)
         deposit(uid, price)
+        deposit(name, price * 0.1)
         return 1
     else:
         return 0
