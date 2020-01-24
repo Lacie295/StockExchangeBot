@@ -62,22 +62,19 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 2:
                     name = split[1]
-                    if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
-                        amount = db_handler.get_account(name)
-                        if amount is not None:
-                            free = db_handler.get_free_stocks(name)
-                            price = db_handler.get_price(name)
-                            stocks = db_handler.get_stocks(name)
-                            s = "Balance: " + str(amount) + "\n" + "Available stocks: " + str(
-                                free) + "\n" + "Stock price: " + str(price) + "\n"
-                            for uid in stocks:
-                                s += m.guild.get_member(int(uid)).display_name + " has " + str(
-                                    stocks[uid]) + " stocks.\n"
-                            await context.send(s)
-                        else:
-                            await context.send("Company doesn't exist.")
+                    amount = db_handler.get_account(name)
+                    if amount is not None:
+                        free = db_handler.get_free_stocks(name)
+                        price = db_handler.get_price(name)
+                        stocks = db_handler.get_stocks(name)
+                        s = "Balance: " + str(amount) + "\n" + "Available stocks: " + str(
+                            free) + "\n" + "Stock price: " + str(price) + "\n"
+                        for uid in stocks:
+                            s += m.guild.get_member(int(uid)).display_name + " has " + str(
+                                stocks[uid]) + " stocks.\n"
+                        await context.send(s)
                     else:
-                        await context.send("You do not have permission to use this!")
+                        await context.send("Company doesn't exist.")
                 else:
                     amnt = db_handler.get_account(str(m.author.id))
                     if amnt is not None:
@@ -169,10 +166,12 @@ def init(client):
                 if len(split) == 3 and len(m.mentions) == 1:
                     amount = float(split[2])
                     mention = m.mentions[0]
-                    if db_handler.get_account(str(mention.id)) is not None and db_handler.get_account(
-                            str(mention.id)) >= amount:
-                        db_handler.withdraw(str(mention.id), amount)
-                        await context.send("Withdrew " + str(amount) + " from " + mention.display_name + "'s account.")
+                    if db_handler.get_account(str(mention.id)) is not None:
+                        if db_handler.get_account(str(mention.id)) >= amount:
+                            db_handler.withdraw(str(mention.id), amount)
+                            await context.send("Withdrew " + str(amount) + " from " + mention.display_name + "'s account.")
+                        else:
+                            await context.send("Not enough funds.")
                     else:
                         await context.send("Account doesn't exist.")
                 elif len(split) == 3:
@@ -199,11 +198,14 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 3:
                     name = split[1]
-                    amount = float(split[2])
-                    if db_handler.buy_stock(name, str(m.author.id), amount):
-                        await context.send("Stocks bought.")
+                    if db_handler.get_owner(name) == m.author.id:
+                        await context.send("You can't invest in your own company.")
                     else:
-                        await context.send("Not enough funds or stocks left to buy.")
+                        amount = int(split[2])
+                        if db_handler.buy_stock(name, str(m.author.id), amount):
+                            await context.send("Stocks bought.")
+                        else:
+                            await context.send("Not enough funds or stocks left to buy.")
                 else:
                     await context.send("Please provide a company and an amount.")
 
@@ -218,7 +220,7 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 3:
                     name = split[1]
-                    amount = float(split[2])
+                    amount = int(split[2])
                     if db_handler.sell_stock(name, str(m.author.id), amount):
                         await context.send("Stocks sold.")
                     else:
