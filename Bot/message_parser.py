@@ -104,7 +104,7 @@ def init(client):
         async def set_owner(self, context):
             m = context.message
             split = m.content.split(" ")
-            if len(split) == 3:
+            if len(split) == 3 and len(m.mentions) == 1:
                 name = split[1]
                 mention = m.mentions[0]
                 if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
@@ -117,6 +117,22 @@ def init(client):
             else:
                 await context.send("Please provide a single company name.")
 
-
+        @commands.command(pass_context=True)
+        async def deposit(self, context):
+            m = context.message
+            if not m.author.guild_permissions.administrator:
+                split = m.content.split(" ")
+                if len(split) == 3 and len(m.mentions) == 1:
+                    amount = float(split[2])
+                    mention = m.mentions[0]
+                    if db_handler.get_account(str(mention.id)) is not None:
+                        db_handler.deposit(str(mention.id), amount)
+                        await context.send("Deposited " + str(amount) + " into " + mention.name + "'s account.")
+                    else:
+                        await context.send("Account doesn't exist.")
+                else:
+                    await context.send("Please provide an account and an amount.")
+            else:
+                await context.send("You do not have permission to use this!")
 
     client.add_cog(Stock())
