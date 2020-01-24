@@ -45,6 +45,15 @@ def add_account(uid):
         return 0
 
 
+def delete_account(uid):
+    if uid in db['accounts']:
+        acc = db['accounts'].pop(uid)
+        write()
+        return acc
+    else:
+        return None
+
+
 def get_account(uid):
     if uid in db['accounts']:
         return db['accounts'][uid]
@@ -66,12 +75,29 @@ def withdraw(uid, amount):
 
 def add_company(name, price):
     if name not in db['stocks']:
-        db['stocks'][name] = [price, 0, {}, None, 0]
+        db['stocks'][name] = [price, 0, {}, None, 0.0]
         add_account(name)
         write()
         return 1
     else:
         return 0
+
+
+def delete_company(name):
+    if name in db['stocks']:
+        company = db['stocks'].pop(name)
+        acc = delete_account(name)
+        write()
+        return company, acc
+    else:
+        return None
+
+
+def delete_owner(uid):
+    for name in db['stocks']:
+        company = get_company(name)
+        company[3] = None
+    write()
 
 
 def get_company(name):
