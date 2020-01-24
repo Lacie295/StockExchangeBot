@@ -4,6 +4,7 @@
 
 import json
 import os
+import math
 
 songs = '../stocks.json'
 dirname = os.path.dirname(__file__)
@@ -53,17 +54,19 @@ def get_account(uid):
 
 def deposit(uid, amount):
     db['accounts'][uid] += amount
+    db['accounts'][uid] = round(db['accounts'][uid] * 100) / 100
     write()
 
 
 def withdraw(uid, amount):
     db['accounts'][uid] -= amount
+    db['accounts'][uid] = round(db['accounts'][uid] * 100) / 100
     write()
 
 
 def add_company(name, price):
     if name not in db['stocks']:
-        db['stocks'][name] = [price, 100, {}, None]
+        db['stocks'][name] = [price, 0, {}, None, 0]
         add_account(name)
         write()
         return 1
@@ -126,6 +129,22 @@ def set_owner(name, uid):
         return 0
 
 
+def get_revenue(name):
+    if name in db['stocks']:
+        return db['stocks'][name][4]
+    else:
+        return None
+
+
+def set_revenue(name, revenue):
+    if name in db['stocks']:
+        db['stocks'][name][4] = revenue
+        write()
+        return 1
+    else:
+        return 0
+
+
 def assign_stocks(name, uid, amount):
     c = get_company(name)
     c[1] -= amount
@@ -145,6 +164,18 @@ def free_stocks(name, uid, amount):
     if stocks[uid] == 0:
         stocks.pop(uid)
     write()
+
+
+def release_stocks(name, amount):
+    free = get_free_stocks(name)
+    stocks = get_stocks(name)
+    for uid in stocks:
+        free += stocks[uid]
+    if free + amount >= 100:
+        return 0
+    else:
+        get_company(name)[1] += amount
+        return 1
 
 
 def buy_stock(name, uid, amount):
@@ -168,7 +199,7 @@ def sell_stock(name, uid, amount):
     if stocks is None or get_account(uid) is None:
         return 0
     price = get_price(name) * amount
-    if uid in stocks and amount < stocks[uid]:
+    if uid in stocks and amount <= stocks[uid]:
         free_stocks(name, uid, amount)
         deposit(uid, price)
         deposit(name, price * 0.1)

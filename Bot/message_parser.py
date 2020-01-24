@@ -67,8 +67,11 @@ def init(client):
                         free = db_handler.get_free_stocks(name)
                         price = db_handler.get_price(name)
                         stocks = db_handler.get_stocks(name)
+                        owner = m.guild.get_member(db_handler.get_owner(name)).display_name
+                        revenue = db_handler.get_revenue(name)
                         s = "Balance: " + str(amount) + "\n" + "Available stocks: " + str(
-                            free) + "\n" + "Stock price: " + str(price) + "\n"
+                            free) + "\n" + "Stock price: " + str(
+                            price) + "\n" + "Owner: " + owner + "\n" + "Revenue: " + str(revenue) + "\n"
                         for uid in stocks:
                             s += m.guild.get_member(int(uid)).display_name + " has " + str(
                                 stocks[uid]) + " stocks.\n"
@@ -169,7 +172,8 @@ def init(client):
                     if db_handler.get_account(str(mention.id)) is not None:
                         if db_handler.get_account(str(mention.id)) >= amount:
                             db_handler.withdraw(str(mention.id), amount)
-                            await context.send("Withdrew " + str(amount) + " from " + mention.display_name + "'s account.")
+                            await context.send(
+                                "Withdrew " + str(amount) + " from " + mention.display_name + "'s account.")
                         else:
                             await context.send("Not enough funds.")
                     else:
@@ -251,5 +255,41 @@ def init(client):
                 else:
                     self.frozen = False
                     await context.send("Market is now unfrozen.")
+
+        @commands.command(pass_context=True, aliases=['release'])
+        async def release_stocks(self, context):
+            """Releases stocks for a company. Owner only.
+            Usage: !release company #stocks"""
+            m = context.message
+            split = m.content.split(" ")
+            if len(split) == 3:
+                name = split[1]
+                if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
+                    amount = int(split[2])
+                    if db_handler.release_stocks(name, amount):
+                        await context.send("Released " + str(amount) + " stocks for " + name + ".")
+                    else:
+                        await context.send("Can't release more than 100 stocks.")
+                else:
+                    await context.send("You don't own this company.")
+            else:
+                await context.send("Please indicate a company and a quantity.")
+
+        @commands.command(pass_context=True, aliases=['revenue'])
+        async def set_revenue(self, context):
+            """Sets revenue for a company. Owner only.
+            Usage: !set_revenue company amount"""
+            m = context.message
+            split = m.content.split(" ")
+            if len(split) == 3:
+                name = split[1]
+                if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
+                    amount = float(split[2])
+                    db_handler.set_revenue(name, amount)
+                    await context.send("Set revenue for " + name + " to " + str(amount) + ".")
+                else:
+                    await context.send("You don't own this company.")
+            else:
+                await context.send("Please indicate a company and a quantity.")
 
     client.add_cog(Stock())
