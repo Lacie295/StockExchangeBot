@@ -7,7 +7,7 @@ import db_handler
 import re
 
 r_int = r"^[0-9]*$"
-r_float = r"^[0-9]+(.[0-9]]+)?$"
+r_float = r"^[0-9]+(\.[0-9]+)?$"
 
 
 def init(client):
