@@ -120,10 +120,11 @@ def init(client):
             Usage: %set_owner @user"""
             m = context.message
             split = m.content.split(" ")
+            print(split)
             if len(split) == 3 and len(m.mentions) == 1:
                 name = split[1]
                 mention = m.mentions[0]
-                if db_handler.get_account(mention.id) is not None:
+                if db_handler.get_account(str(mention.id)) is not None:
                     if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
                         if db_handler.set_owner(name, mention.id):
                             await context.send("Ownership of " + name + " given to " + mention.display_name + ".")
