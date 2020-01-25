@@ -6,6 +6,9 @@ from discord.ext import commands
 import db_handler
 import re
 
+r_int = r"^[0-9]*$"
+r_float = r"^[0-9]+(.[0-9]]+)?$"
+
 
 def init(client):
     class Stock(commands.Cog):
@@ -103,12 +106,15 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 3:
                     name = split[1]
-                    price = float(split[2])
-                    if db_handler.add_account(name):
-                        db_handler.add_company(name, price)
-                        await context.send("Created company.")
+                    if re.match(r_float, split[2]):
+                        price = float(split[2])
+                        if db_handler.add_account(name):
+                            db_handler.add_company(name, price)
+                            await context.send("Created company.")
+                        else:
+                            await context.send("Company exists.")
                     else:
-                        await context.send("Company exists.")
+                        await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("Please provide a company name and a price.")
             else:
@@ -120,7 +126,6 @@ def init(client):
             Usage: %set_owner @user"""
             m = context.message
             split = m.content.split(" ")
-            print(split)
             if len(split) == 3 and len(m.mentions) == 1:
                 name = split[1]
                 mention = m.mentions[0]
@@ -145,21 +150,27 @@ def init(client):
             if m.author.guild_permissions.administrator:
                 split = m.content.split(" ")
                 if len(split) == 3 and len(m.mentions) == 1:
-                    amount = float(split[2])
                     mention = m.mentions[0]
-                    if db_handler.get_account(str(mention.id)) is not None:
-                        db_handler.deposit(str(mention.id), amount)
-                        await context.send("Deposited " + str(amount) + " into " + mention.display_name + "'s account.")
+                    if re.match(r_float, split[2]):
+                        amount = float(split[2])
+                        if db_handler.get_account(str(mention.id)) is not None:
+                            db_handler.deposit(str(mention.id), amount)
+                            await context.send("Deposited " + str(amount) + " into " + mention.display_name + "'s account.")
+                        else:
+                            await context.send("Account doesn't exist.")
                     else:
-                        await context.send("Account doesn't exist.")
+                        await context.send("2nd parameter must be a number.")
                 elif len(split) == 3:
                     name = split[1]
-                    amount = float(split[2])
-                    if db_handler.get_account(name) is not None:
-                        db_handler.deposit(name, amount)
-                        await context.send("Deposited " + str(amount) + " into " + name + "'s account.")
+                    if re.match(r_float, split[2]):
+                        amount = float(split[2])
+                        if db_handler.get_account(name) is not None:
+                            db_handler.deposit(name, amount)
+                            await context.send("Deposited " + str(amount) + " into " + name + "'s account.")
+                        else:
+                            await context.send("Company doesn't exist.")
                     else:
-                        await context.send("Company doesn't exist.")
+                        await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("Please provide an account and an amount.")
             else:
@@ -173,25 +184,31 @@ def init(client):
             if m.author.guild_permissions.administrator:
                 split = m.content.split(" ")
                 if len(split) == 3 and len(m.mentions) == 1:
-                    amount = float(split[2])
                     mention = m.mentions[0]
-                    if db_handler.get_account(str(mention.id)) is not None:
-                        if db_handler.get_account(str(mention.id)) >= amount:
-                            db_handler.withdraw(str(mention.id), amount)
-                            await context.send(
-                                "Withdrew " + str(amount) + " from " + mention.display_name + "'s account.")
+                    if re.match(r_float, split[2]):
+                        amount = float(split[2])
+                        if db_handler.get_account(str(mention.id)) is not None:
+                            if db_handler.get_account(str(mention.id)) >= amount:
+                                db_handler.withdraw(str(mention.id), amount)
+                                await context.send(
+                                    "Withdrew " + str(amount) + " from " + mention.display_name + "'s account.")
+                            else:
+                                await context.send("Not enough funds.")
                         else:
-                            await context.send("Not enough funds.")
+                            await context.send("Account doesn't exist.")
                     else:
-                        await context.send("Account doesn't exist.")
+                        await context.send("2nd parameter must be a number.")
                 elif len(split) == 3:
                     name = split[1]
-                    amount = float(split[2])
-                    if db_handler.get_account(name) is not None and db_handler.get_account(name) >= amount:
-                        db_handler.withdraw(name, amount)
-                        await context.send("Withdrew " + str(amount) + " from " + name + "'s account.")
+                    if re.match(r_float, split[2]):
+                        amount = float(split[2])
+                        if db_handler.get_account(name) is not None and db_handler.get_account(name) >= amount:
+                            db_handler.withdraw(name, amount)
+                            await context.send("Withdrew " + str(amount) + " from " + name + "'s account.")
+                        else:
+                            await context.send("Company doesn't exist.")
                     else:
-                        await context.send("Company doesn't exist.")
+                        await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("Please provide an account and an amount.")
             else:
@@ -211,11 +228,14 @@ def init(client):
                     if db_handler.get_owner(name) == m.author.id:
                         await context.send("You can't invest in your own company.")
                     else:
-                        amount = int(split[2])
-                        if db_handler.buy_stock(name, str(m.author.id), amount):
-                            await context.send("Stocks bought.")
+                        if re.match(r_int, split[2]):
+                            amount = int(split[2])
+                            if db_handler.buy_stock(name, str(m.author.id), amount):
+                                await context.send("Stocks bought.")
+                            else:
+                                await context.send("Not enough funds or stocks left to buy.")
                         else:
-                            await context.send("Not enough funds or stocks left to buy.")
+                            await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("Please provide a company and an amount.")
 
@@ -230,11 +250,14 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 3:
                     name = split[1]
-                    amount = int(split[2])
-                    if db_handler.sell_stock(name, str(m.author.id), amount):
-                        await context.send("Stocks sold.")
+                    if re.match(r_int, split[2]):
+                        amount = int(split[2])
+                        if db_handler.sell_stock(name, str(m.author.id), amount):
+                            await context.send("Stocks sold.")
+                        else:
+                            await context.send("Not enough stocks left to sell.")
                     else:
-                        await context.send("Not enough stocks left to sell.")
+                        await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("Please provide a company and an amount.")
 
@@ -272,11 +295,14 @@ def init(client):
             if len(split) == 3:
                 name = split[1]
                 if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
-                    amount = int(split[2])
-                    if db_handler.release_stocks(name, amount):
-                        await context.send("Released " + str(amount) + " stocks for " + name + ".")
+                    if re.match(r_int, split[2]):
+                        amount = int(split[2])
+                        if db_handler.release_stocks(name, amount):
+                            await context.send("Released " + str(amount) + " stocks for " + name + ".")
+                        else:
+                            await context.send("Can't release more than 100 stocks.")
                     else:
-                        await context.send("Can't release more than 100 stocks.")
+                        await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("You don't own this company.")
             else:
@@ -292,9 +318,12 @@ def init(client):
             if len(split) == 3:
                 name = split[1]
                 if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
-                    amount = float(split[2])
-                    db_handler.set_revenue(name, amount)
-                    await context.send("Set revenue for " + name + " to " + str(amount) + ".")
+                    if re.match(r_float, split[2]):
+                        amount = float(split[2])
+                        db_handler.set_revenue(name, amount)
+                        await context.send("Set revenue for " + name + " to " + str(amount) + ".")
+                    else:
+                        await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("You don't own this company.")
             else:
@@ -310,7 +339,7 @@ def init(client):
                 s = "Users:\n"
                 c = "Companies:\n"
                 for acc in accounts:
-                    if re.match(r"^[0-9]*$", acc):
+                    if re.match(r_int, acc):
                         uid = int(acc)
                         member = m.guild.get_member(uid)
                         if member:
@@ -365,13 +394,16 @@ def init(client):
             m = context.message
             split = m.content.split(" ")
             if len(split) == 2:
-                uid = int(split[1])
-                if db_handler.get_owner(uid) == m.author.id or not m.author.guild_permissions.administrator:
-                    db_handler.delete_account(str(uid))
-                    db_handler.delete_owner(uid)
-                    await context.send(str(uid) + " deleted.")
+                if re.match(r_int, split[1]):
+                    uid = int(split[1])
+                    if db_handler.get_owner(uid) == m.author.id or not m.author.guild_permissions.administrator:
+                        db_handler.delete_account(str(uid))
+                        db_handler.delete_owner(uid)
+                        await context.send(str(uid) + " deleted.")
+                    else:
+                        await context.send("You do not have permission to use this!")
                 else:
-                    await context.send("You do not have permission to use this!")
+                    await context.send("Parameter must be a number.")
             else:
                 await context.send("Please provide a user id!")
 
