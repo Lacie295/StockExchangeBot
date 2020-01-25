@@ -114,6 +114,14 @@ def get_price(name):
         return None
 
 
+def set_price(name, price):
+    if name in db['stocks']:
+        db['stocks'][name][0] = price
+        return 1
+    else:
+        return 0
+
+
 def get_free_stocks(name):
     if name in db['stocks']:
         return db['stocks'][name][1]

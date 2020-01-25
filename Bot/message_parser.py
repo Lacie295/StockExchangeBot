@@ -123,7 +123,7 @@ def init(client):
         @commands.command(pass_context=True)
         async def set_owner(self, context):
             """Transfers company ownership. Admin or owner only.
-            Usage: %set_owner @user"""
+            Usage: %set_owner company @user"""
             m = context.message
             split = m.content.split(" ")
             if len(split) == 3 and len(m.mentions) == 1:
@@ -139,6 +139,25 @@ def init(client):
                         await context.send("You do not have permission to use this!")
                 else:
                     await context.send("User has no account!")
+            else:
+                await context.send("Please provide a single company name.")
+
+        @commands.command(pass_context=True)
+        async def set_price(self, context):
+            """Sets the price of company stocks. Admin only.
+            Usage: %set_price company price"""
+            m = context.message
+            split = m.content.split(" ")
+            if len(split) == 3:
+                name = split[1]
+                if re.match(r_float, split[2]):
+                    price = float(split[2])
+                    if db_handler.set_price(name, price):
+                        await context.send("Set price of " + name + " to " + str(price) + ".")
+                    else:
+                        await context.send("Company doesn't exist.")
+                else:
+                    await context.send("2nd parameter must be a number.")
             else:
                 await context.send("Please provide a single company name.")
 
@@ -334,7 +353,7 @@ def init(client):
             """Lists all users and companies. Admin only.
             Usage: %list"""
             m = context.message
-            if not m.author.guild_permissions.administrator:
+            if m.author.guild_permissions.administrator:
                 accounts = db_handler.db['accounts']
                 s = "Users:\n"
                 c = "Companies:\n"
