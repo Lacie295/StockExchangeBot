@@ -415,7 +415,7 @@ def init(client):
             if len(split) == 2:
                 if re.match(r_int, split[1]):
                     uid = int(split[1])
-                    if db_handler.get_owner(uid) == m.author.id or not m.author.guild_permissions.administrator:
+                    if db_handler.get_owner(uid) == m.author.id or m.author.guild_permissions.administrator:
                         db_handler.delete_account(str(uid))
                         db_handler.delete_owner(uid)
                         await context.send(str(uid) + " deleted.")
