@@ -205,7 +205,7 @@ def release_stocks(name, amount):
     stocks = get_stocks(name)
     for uid in stocks:
         free += stocks[uid]
-    if free + amount >= 100:
+    if free + amount > 100:
         return 0
     else:
         get_company(name)[1] += amount
