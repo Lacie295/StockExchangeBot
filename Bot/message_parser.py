@@ -174,7 +174,8 @@ def init(client):
                         amount = float(split[2])
                         if db_handler.get_account(str(mention.id)) is not None:
                             db_handler.deposit(str(mention.id), amount)
-                            await context.send("Deposited " + str(amount) + " into " + mention.display_name + "'s account.")
+                            await context.send(
+                                "Deposited " + str(amount) + " into " + mention.display_name + "'s account.")
                         else:
                             await context.send("Account doesn't exist.")
                     else:
@@ -235,7 +236,7 @@ def init(client):
 
         @commands.command(pass_context=True)
         async def buy(self, context):
-            """Buy stocks from commpany.
+            """Buy free stocks from company.
             Usage: %buy company #stocks"""
             if self.frozen:
                 await context.send("Market is frozen!")
@@ -260,7 +261,7 @@ def init(client):
 
         @commands.command(pass_context=True)
         async def sell(self, context):
-            """Sells stocks from commpany.
+            """Sells stocks back to company.
             Usage: %sell company #stocks"""
             if self.frozen:
                 await context.send("Market is frozen!")
@@ -279,6 +280,106 @@ def init(client):
                         await context.send("2nd parameter must be a number.")
                 else:
                     await context.send("Please provide a company and an amount.")
+
+        @commands.command(pass_context=True)
+        async def offer(self, context):
+            """Puts up an offer to sell stocks.
+            Usage: %offer company #stocks price/stock"""
+            if self.frozen:
+                await context.send("Market is frozen!")
+            else:
+                m = context.message
+                split = m.content.split(" ")
+                if len(split) == 4:
+                    name = split[1]
+                    if re.match(r_int, split[2]) and re.match(r_float, split[3]):
+                        amount = int(split[2])
+                        price = float(split[3])
+                        if db_handler.add_request(str(m.author.id), name, -amount, price):
+                            await context.send("Stocks set for sale.")
+                        else:
+                            await context.send("Not enough stocks left to sell.")
+                    else:
+                        await context.send("2nd and 3rd parameter must be numbers.")
+                else:
+                    await context.send("Please provide a company, an amount and a price.")
+
+        @commands.command(pass_context=True)
+        async def request(self, context):
+            """Puts up a request to sell stocks.
+            Usage: %request company #stocks price/stock"""
+            if self.frozen:
+                await context.send("Market is frozen!")
+            else:
+                m = context.message
+                split = m.content.split(" ")
+                if len(split) == 4:
+                    name = split[1]
+                    if re.match(r_int, split[2]) and re.match(r_float, split[3]):
+                        amount = int(split[2])
+                        price = float(split[3])
+                        if db_handler.add_request(str(m.author.id), name, amount, price):
+                            await context.send("Request set.")
+                        else:
+                            await context.send("Not enough stocks left to sell.")
+                    else:
+                        await context.send("2nd and 3rd parameter must be numbers.")
+                else:
+                    await context.send("Please provide a company, an amount and a price.")
+
+        @commands.command(pass_context=True)
+        async def accept(self, context):
+            """Accepts a request or offer and does the transaction.
+            Usage: %accept @user company #stocks"""
+            if self.frozen:
+                await context.send("Market is frozen!")
+            else:
+                m = context.message
+                split = m.content.split(" ")
+                if len(split) == 4 and len(m.mentions) == 1:
+                    sid = str(m.mentions[0].id)
+                    bid = str(m.author.id)
+                    name = split[2]
+                    if re.match(r_int, split[3]):
+                        if sid == bid:
+                            await context.send("Cannot do a transaction with yourself.")
+                        else:
+                            amount = int(split[3])
+                            req = db_handler.get_request(sid, name)
+                            if req is not None:
+                                sell = -1 if req[0] < 0 else 1
+                                if db_handler.confirm_sale(sid, bid, name, amount * sell):
+                                    await context.send("Transaction done.")
+                                else:
+                                    await context.send("Not enough stocks or funds.")
+                            else:
+                                await context.send("Offer/Request does not exist.")
+                    else:
+                        await context.send("3rd parameter must be a number.")
+                else:
+                    await context.send("Please provide a user, a company and an amount.")
+
+        @commands.command(pass_context=True)
+        async def list_offers(self, context):
+            """Lists all current offers and requests.
+            Usage: %list_offers company"""
+            m = context.message
+            split = m.content.split(" ")
+            if len(split) == 2:
+                name = split[1]
+                requests = db_handler.get_requests(name)
+                if requests is None:
+                    await context.send("No offers or request currently available for " + name + ".")
+                else:
+                    for uid in requests:
+                        member = m.guild.get_member(int(uid))
+                        uname = member.display_name if member else "USER LEFT GUILD"
+                        price = requests[uid][1]
+                        amount = requests[uid][0]
+                        await context.send(uname + (" selling " + str(-amount) if amount < 0 else " requesting " + str(
+                            amount)) + " stocks for " + str(price) + " per stock.")
+            else:
+                await context.send("Please provide a company.")
 
         @commands.command(pass_context=True)
         async def freeze(self, context):
