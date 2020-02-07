@@ -293,8 +293,8 @@ def confirm_sale(sid, bid, name, amount):
     if request is None:
         return 0
     else:
-        price = abs(request[0] * amount)
-        max_amount = request[1]
+        price = abs(request[1] * amount)
+        max_amount = request[0]
         if max_amount <= amount < 0 and price <= get_account(bid):
             # sid was selling, amount is negative
             # bid pays, sid gains
