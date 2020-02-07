@@ -345,7 +345,7 @@ def init(client):
 
         @commands.command(pass_context=True)
         async def list_offers(self, context):
-            """Lists all current offers and requests.
+            """Lists all current offers and requests for a company.
             Usage: %list_offers company"""
             m = context.message
             split = m.content.split(" ")
