@@ -272,16 +272,20 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 4:
                     name = split[1]
-                    if re.match(r_int, split[2]) and re.match(r_float, split[3]):
-                        amount = int(split[2])
-                        price = float(split[3])
-                        if db_handler.add_request(str(m.author.id), name, -amount, price):
-                            await context.send(str(amount) + " " + name + " stocks set for sale at " + str(
-                                price) + currency + " a piece.")
-                        else:
-                            await context.send("Not enough stocks left to sell.")
+                    if db_handler.get_stocks(name) is None:
+                        await context.send("Company doesn't exist.")
                     else:
-                        await context.send("2nd and 3rd parameter must be numbers.")
+                        if re.match(r_int, split[2]) and re.match(r_float, split[3]):
+                            amount = int(split[2])
+                            price = float(split[3])
+                            if db_handler.add_request(str(m.author.id), name, -amount, price):
+                                await context.send(str(amount) + " " + name + " stocks set for sale at " + str(
+                                    price) + currency + " a piece.")
+                                await update_offers()
+                            else:
+                                await context.send("Not enough stocks left to sell.")
+                        else:
+                            await context.send("2nd and 3rd parameter must be numbers.")
                 else:
                     await context.send("Please provide a company, an amount and a price.")
 
@@ -296,16 +300,20 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 4:
                     name = split[1]
-                    if re.match(r_int, split[2]) and re.match(r_float, split[3]):
-                        amount = int(split[2])
-                        price = float(split[3])
-                        if db_handler.add_request(str(m.author.id), name, amount, price):
-                            await context.send("Request set for " + str(amount) + " " + name + " stocks at " + str(
-                                price) + currency + " a piece.")
-                        else:
-                            await context.send("Not enough stocks left to sell.")
+                    if db_handler.get_stocks(name) is None:
+                        await context.send("Company doesn't exist.")
                     else:
-                        await context.send("2nd and 3rd parameter must be numbers.")
+                        if re.match(r_int, split[2]) and re.match(r_float, split[3]):
+                            amount = int(split[2])
+                            price = float(split[3])
+                            if db_handler.add_request(str(m.author.id), name, amount, price):
+                                await context.send("Request set for " + str(amount) + " " + name + " stocks at " + str(
+                                    price) + currency + " a piece.")
+                                await update_offers()
+                            else:
+                                await context.send("Not enough stocks left to sell.")
+                        else:
+                            await context.send("2nd and 3rd parameter must be numbers.")
                 else:
                     await context.send("Please provide a company, an amount and a price.")
 
@@ -334,6 +342,7 @@ def init(client):
                                 if db_handler.confirm_sale(sid, bid, name, amount * sell):
                                     await context.send(
                                         "Exchanged " + str(amount) + " stocks with " + s.display_name + ".")
+                                    await update_offers()
                                 else:
                                     await context.send("Not enough stocks or funds.")
                             else:
@@ -365,7 +374,20 @@ def init(client):
                             amount)) + " stocks for " + str(price) + currency + " per stock."
                     await context.send(s if s != "" else "No offers or requests.")
             else:
-                await context.send("Please provide a company.")@commands.command(pass_context=True)
+                await context.send("Please provide a company.") @ commands.command(pass_context=True)
+
+        @commands.command(pass_context=True)
+        async def list_all_offers(self, context):
+            """Lists all current offers and requests.
+            Usage: %list_all_offers"""
+            m = context.message
+            if m.author.guild_permissions.administrator:
+                message = await context.send("loading...")
+                mid = message.id
+                cid = m.channel.id
+                gid = m.guild.id
+                db_handler.set_offers_message(gid, cid, mid)
+                await update_offers()
 
         @commands.command(pass_context=True)
         async def remove_offer(self, context):
@@ -532,5 +554,31 @@ def init(client):
                     await context.send("Parameter must be a number.")
             else:
                 await context.send("Please provide a user id!")
+
+    async def update_offers():
+        gid, cid, mid = db_handler.get_offers_message()
+        guild = client.get_guild(gid)
+        channel = guild.get_channel(cid)
+        message = await channel.fetch_message(mid)
+        s = ""
+        names = db_handler.get_names()
+        for name in names:
+            stemp = ""
+            requests = db_handler.get_requests(name)
+            if requests is None:
+                stemp = "\tNo requests.\n"
+            else:
+                for uid in requests:
+                    amount, price = requests[uid]
+                    member = guild.get_member(int(uid))
+                    temp = " selling " if amount < 0 else " asking for "
+                    amount = amount if amount > 0 else -amount
+                    if member:
+                        stemp += "\t" + member.display_name
+                    else:
+                        stemp += "\t" + "USER LEFT GUILD"
+                    stemp += temp + str(amount) + " stocks at " + str(price) + currency + " a piece.\n"
+            s += name + "\n" + stemp
+        await message.edit(content=s)
 
     client.add_cog(Stock())

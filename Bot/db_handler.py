@@ -30,6 +30,9 @@ if "stocks" not in db:
 if "sales" not in db:
     db['sales'] = {}
 
+if "channels" not in db:
+    db['channels'] = {}
+
 
 def write():
     with open(filename, "w+") as file:
@@ -246,7 +249,8 @@ def sell_stock(name, uid, amount):
 
 def add_request(uid, name, price, amount):
     # if amount < 0, uid is selling, check if -amount < owned stocks
-    if uid in get_stocks(name) and -amount <= get_stocks(name)[uid]:
+    stocks = get_stocks(name)
+    if stocks is not None and uid in stocks and -amount <= stocks[uid] and amount != 0 and amount <= 100:
         if name not in db['sales']:
             db['sales'][name] = {}
         db['sales'][name][uid] = (price, amount)
@@ -329,3 +333,16 @@ def confirm_sale(sid, bid, name, amount):
             return 1
         else:
             return 0
+
+
+def set_offers_message(gid, cid, mid):
+    db['channels']["offers"] = (gid, cid, mid)
+    write()
+
+
+def get_offers_message():
+    return db['channels']["offers"]
+
+
+def get_names():
+    return db['stocks'].keys()
