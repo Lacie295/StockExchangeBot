@@ -381,7 +381,7 @@ def init(client):
                         price = requests[uid][1]
                         amount = requests[uid][0]
                         value += uname + (" selling " if amount < 0 else " requesting ") + str(abs(amount)) + " for " + \
-                                 str(price) + currency + " per stock"
+                                 str(price) + currency + " per stock\n"
                     embed.add_field(name="Listings",
                                     value=value,
                                     inline=False)
