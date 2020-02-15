@@ -5,6 +5,7 @@
 from discord.ext import commands
 import db_handler
 import re
+import discord
 
 r_int = r"^[0-9]*$"
 r_float = r"^[0-9]+(\.[0-9]+)?$"
@@ -46,21 +47,21 @@ def init(client):
             m = context.message
             if m.mentions:
                 if m.author.guild_permissions.administrator:
-                    s = ""
-                    f = ""
+                    embed = discord.Embed(title="User data", colour=discord.Colour.blue())
+
                     for member in m.mentions:
                         amnt = db_handler.get_account(str(member.id))
                         if amnt is not None:
-                            s += member.display_name + " has " + str(amnt) + currency + ".\n"
+                            embed.add_field(name="User", value=member.display_name, inline=True)
+                            embed.add_field(name="Balance", value=str(amnt) + currency, inline=True)
+
                             stocks = db_handler.get_user_stocks(str(member.id))
-                            s += "Stock holdings:\n"
                             for name in stocks:
-                                s += str(stocks[name]) + " in " + name + ".\n"
-                            s += "\n"
+                                embed.add_field(name="Stocks in " + name + ":", value=str(stocks[name]), inline=False)
+
                         else:
-                            f += member.display_name + " "
-                    await context.send((s if s else "")
-                                       + (f + "has/have no account." if f else ""))
+                            embed.add_field(name=member.display_name, value="No account", inline=False)
+                    await context.send(embed=embed)
                 else:
                     await context.send("You do not have permission to use this!")
             else:
@@ -69,31 +70,38 @@ def init(client):
                     name = split[1]
                     amount = db_handler.get_account(name)
                     if amount is not None:
+                        embed = discord.Embed(title="Company data", colour=discord.Colour.blue())
                         free = db_handler.get_free_stocks(name)
                         price = db_handler.get_price(name)
                         stocks = db_handler.get_stocks(name)
                         owner = db_handler.get_owner(name)
+                        owner_user = m.guild.get_member(owner)
                         revenue = db_handler.get_revenue(name)
-                        s = "Balance: " + str(amount) + "\n" + "Available stocks: " + str(
-                            free) + "\n" + "Stock price: " + str(
-                            price) + currency + "\n" + ("Owner: " + m.guild.get_member(
-                            owner).display_name if owner else "No owner.") + "\n" + "Revenue: " + str(revenue) + "\n"
+                        embed.add_field(name="Company", value=name, inline=True)
+                        embed.add_field(name="Balance", value=str(amount) + currency, inline=True)
+                        embed.add_field(name="Free Stocks", value=free, inline=True)
+                        embed.add_field(name="Stock Price", value=str(price) + currency, inline=True)
+                        embed.add_field(name="Owner", value=(
+                            owner_user.display_name if owner_user is not None else "USER LEFT GUILD")
+                        if owner is not None else "No owner", inline=True)
+                        embed.add_field(name="Revenue", value=str(revenue) + currency, inline=True)
                         for uid in stocks:
-                            s += m.guild.get_member(int(uid)).display_name + " has " + str(
-                                stocks[uid]) + " stocks.\n"
-                        await context.send(s)
+                            embed.add_field(name="Stocks owned by " + m.guild.get_member(int(uid)).display_name,
+                                            value=str(stocks[uid]), inline=False)
+                        await context.send(embed=embed)
                     else:
                         await context.send("Company doesn't exist.")
                 else:
                     amnt = db_handler.get_account(str(m.author.id))
                     if amnt is not None:
-                        s = "You have " + str(amnt) + currency + ".\n"
+                        embed = discord.Embed(title="User data", colour=discord.Colour.blue())
+                        embed.add_field(name="User", value=m.author.display_name, inline=True)
+                        embed.add_field(name="Balance", value=str(amnt) + currency, inline=True)
+
                         stocks = db_handler.get_user_stocks(str(m.author.id))
-                        s += "Stock holdings:\n"
                         for name in stocks:
-                            s += str(stocks[name]) + " in " + name + ".\n"
-                        s += "\n"
-                        await context.send(s)
+                            embed.add_field(name="Stocks in " + name + ":", value=str(stocks[name]), inline=False)
+                        await context.send(embed=embed)
                     else:
                         await context.send("You have no account.")
 
@@ -111,7 +119,8 @@ def init(client):
                         price = float(split[2])
                         if db_handler.add_account(name):
                             db_handler.add_company(name, price)
-                            await context.send("Created company" + name + " with stock price " + price + currency + ".")
+                            await context.send(
+                                "Created company" + name + " with stock price " + str(price) + currency + ".")
                         else:
                             await context.send("Company exists.")
                     else:
@@ -364,15 +373,22 @@ def init(client):
                 if requests is None:
                     await context.send("No offers or request currently available for " + name + ".")
                 else:
-                    s = ""
+                    embed = discord.Embed(title="Offers for " + name, colour=discord.Colour.red())
+                    value = ""
                     for uid in requests:
                         member = m.guild.get_member(int(uid))
                         uname = member.display_name if member else "USER LEFT GUILD"
                         price = requests[uid][1]
                         amount = requests[uid][0]
-                        s += uname + (" selling " + str(-amount) if amount < 0 else " requesting " + str(
-                            amount)) + " stocks for " + str(price) + currency + " per stock."
-                    await context.send(s if s != "" else "No offers or requests.")
+                        value += uname + (" selling " if amount < 0 else " requesting ") + str(abs(amount)) + " for " + \
+                                 str(price) + currency + " per stock"
+                    embed.add_field(name="Listings",
+                                    value=value,
+                                    inline=False)
+                    if len(requests) > 0:
+                        await context.send(embed=embed)
+                    else:
+                        await context.send("No requests for " + name + ".")
             else:
                 await context.send("Please provide a company.") @ commands.command(pass_context=True)
 
@@ -561,8 +577,8 @@ def init(client):
         guild = client.get_guild(gid)
         channel = guild.get_channel(cid)
         message = await channel.fetch_message(mid)
-        s = ""
         names = db_handler.get_names()
+        embed = discord.Embed(title="All offers", colour=discord.Colour.dark_gold())
         for name in names:
             stemp = ""
             requests = db_handler.get_requests(name)
@@ -579,7 +595,7 @@ def init(client):
                     else:
                         stemp += "\t" + "USER LEFT GUILD"
                     stemp += temp + str(amount) + " stocks at " + str(price) + currency + " a piece.\n"
-            s += name + "\n" + stemp
-        await message.edit(content=s)
+            embed.add_field(name="Offers for " + name, value=stemp, inline=False)
+        await message.edit(content="", embed=embed)
 
     client.add_cog(Stock())
