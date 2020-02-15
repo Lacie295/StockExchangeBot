@@ -247,13 +247,13 @@ def sell_stock(name, uid, amount):
         return 0
 
 
-def add_request(uid, name, price, amount):
+def add_request(uid, name, amount, price):
     # if amount < 0, uid is selling, check if -amount < owned stocks
     stocks = get_stocks(name)
-    if stocks is not None and uid in stocks and -amount <= stocks[uid] and amount != 0 and amount <= 100:
+    if stocks is not None and ((uid in stocks and -amount <= stocks[uid]) or amount <= 100) and amount != 0:
         if name not in db['sales']:
             db['sales'][name] = {}
-        db['sales'][name][uid] = (price, amount)
+        db['sales'][name][uid] = (amount, price)
         write()
         return 1
     else:
@@ -283,8 +283,8 @@ def get_requests(name):
         return None
 
 
-def edit_request(uid, name, price, amount):
-    if remove_request(uid, name) and add_request(uid, name, price, amount):
+def edit_request(uid, name, amount, price):
+    if remove_request(uid, name) and add_request(uid, name, amount, price):
         write()
         return 1
     else:
@@ -313,7 +313,7 @@ def confirm_sale(sid, bid, name, amount):
             if amount == max_amount:
                 remove_request(sid, name)
             else:
-                edit_request(sid, name, request[0], max_amount - amount)
+                edit_request(sid, name, max_amount - amount, request[1])
             return 1
         elif max_amount >= amount > 0 and price <= get_account(sid):
             # sid was buying, amount is positive

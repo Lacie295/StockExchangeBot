@@ -111,7 +111,7 @@ def init(client):
                         price = float(split[2])
                         if db_handler.add_account(name):
                             db_handler.add_company(name, price)
-                            await context.send("Created company" + name + " with stock price " + currency + ".")
+                            await context.send("Created company" + name + " with stock price " + price + currency + ".")
                         else:
                             await context.send("Company exists.")
                     else:
@@ -404,6 +404,7 @@ def init(client):
                     result = db_handler.remove_request(uid, name)
                     if result:
                         await context.send("Removed your offer.")
+                        await update_offers()
                     else:
                         await context.send("No offer to be removed.")
                 else:
