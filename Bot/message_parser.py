@@ -121,6 +121,7 @@ def init(client):
                             db_handler.add_company(name, price)
                             await context.send(
                                 "Created company" + name + " with stock price " + str(price) + currency + ".")
+                            await update_offers()
                         else:
                             await context.send("Company exists.")
                     else:
@@ -263,6 +264,7 @@ def init(client):
                             amount = int(split[2])
                             if db_handler.buy_stock(name, str(m.author.id), amount):
                                 await context.send("Stocks bought.")
+                                await update_offers()
                             else:
                                 await context.send("Not enough funds or stocks left to buy.")
                         else:
@@ -464,6 +466,7 @@ def init(client):
                         amount = int(split[2])
                         if db_handler.release_stocks(name, amount):
                             await context.send("Released " + str(amount) + " stocks for " + name + ".")
+                            await update_offers()
                         else:
                             await context.send("Can't release more than 100 stocks.")
                     else:
@@ -547,6 +550,7 @@ def init(client):
                         db_handler.deposit(stock, stocks[stock] * price)
                     db_handler.delete_company(name)
                     await context.send(name + " deleted.")
+                    await update_offers()
                 else:
                     await context.send("You do not have permission to use this!")
             else:
@@ -582,6 +586,7 @@ def init(client):
         for name in names:
             stemp = ""
             requests = db_handler.get_requests(name)
+            free = db_handler.get_free_stocks(name)
             if requests is None:
                 stemp = "\tNo requests.\n"
             else:
@@ -595,6 +600,7 @@ def init(client):
                     else:
                         stemp += "\t" + "USER LEFT GUILD"
                     stemp += temp + str(amount) + " stocks at " + str(price) + currency + " a piece.\n"
+            stemp += "Available stocks: " + str(free)
             embed.add_field(name="Offers for " + name, value=stemp, inline=False)
         await message.edit(content="", embed=embed)
 

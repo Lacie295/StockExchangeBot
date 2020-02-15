@@ -146,7 +146,7 @@ def get_stocks(name):
 
 def get_user_stocks(uid):
     if uid not in db['accounts']:
-        return None
+        return {}
     s = {}
     for name in db['stocks']:
         stocks = get_stocks(name)
