@@ -224,6 +224,7 @@ def release_stocks(name, amount):
         return 0
     else:
         get_company(name)[1] += amount
+        write()
         return 1
 
 

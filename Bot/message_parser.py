@@ -468,7 +468,7 @@ def init(client):
                             await context.send("Released " + str(amount) + " stocks for " + name + ".")
                             await update_offers()
                         else:
-                            await context.send("Can't release more than 100 stocks.")
+                            await context.send("Can't release more than " + str(db_handler.MAX_STOCKS) + " stocks.")
                     else:
                         await context.send("2nd parameter must be a number.")
                 else:
