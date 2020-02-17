@@ -461,7 +461,7 @@ def init(client):
             split = m.content.split(" ")
             if len(split) == 3:
                 name = split[1]
-                if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
+                if m.author.guild_permissions.administrator:
                     if re.match(r_int, split[2]):
                         amount = int(split[2])
                         if db_handler.release_stocks(name, amount):

@@ -21,6 +21,9 @@ with open(filename, "r+") as f:
 
 print(db)
 
+VERSION = 1.0
+MAX_STOCKS = 1000
+
 if "accounts" not in db:
     db['accounts'] = {}
 
@@ -32,6 +35,10 @@ if "sales" not in db:
 
 if "channels" not in db:
     db['channels'] = {}
+
+if "version" not in db:
+    db['version'] = VERSION
+
 
 
 def write():
@@ -213,7 +220,7 @@ def release_stocks(name, amount):
     stocks = get_stocks(name)
     for uid in stocks:
         free += stocks[uid]
-    if free + amount > 100:
+    if free + amount > MAX_STOCKS:
         return 0
     else:
         get_company(name)[1] += amount
