@@ -224,7 +224,7 @@ def buy_stock(name, uid, amount):
     acct = get_account(uid)
     if acct is None or get_company(name) is None:
         return 0
-    price = get_price(name) * amount
+    price = round(get_price(name) * amount, 2)
     if amount <= get_free_stocks(name) and price <= acct:
         assign_stocks(name, uid, amount)
         withdraw(uid, price)
