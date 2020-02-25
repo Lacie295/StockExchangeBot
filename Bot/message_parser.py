@@ -81,13 +81,15 @@ def init(client):
                         embed.add_field(name="Balance", value=str(amount) + currency, inline=True)
                         embed.add_field(name="Free Stocks", value=free, inline=True)
                         embed.add_field(name="Stock Price", value=str(price) + currency, inline=True)
-                        embed.add_field(name="Owner", value=(
-                            owner_user.display_name if owner_user is not None else "USER LEFT GUILD")
-                        if owner is not None else "No owner", inline=True)
+                        embed.add_field(name="Owner", value=(owner_user.display_name if owner_user is not None else
+                                                             "USER LEFT GUILD") if owner is not None else "No owner",
+                                        inline=True)
                         embed.add_field(name="Revenue", value=str(revenue) + currency, inline=True)
                         for uid in stocks:
-                            embed.add_field(name="Stocks owned by " + m.guild.get_member(int(uid)).display_name,
-                                            value=str(stocks[uid]), inline=False)
+                            member = m.guild.get_member(int(uid))
+                            embed.add_field(name="Stocks owned by " + (member.display_name if member else
+                                                                       "USER LEFT GUILD"), value=str(stocks[uid]),
+                                            inline=False)
                         await context.send(embed=embed)
                     else:
                         await context.send("Company doesn't exist.")
@@ -531,7 +533,18 @@ def init(client):
                             else:
                                 c += "owned by USER LEFT GUILD " + str(owner)
                         c += "\n"
-                await context.send(s + "\n" + c.strip())
+                s = s + "\n" + c.strip()
+
+                buffer = ""
+                while s.find("\n") > 0:
+                    chunk = s[:s.find("\n")+1]
+                    if len(buffer + chunk) > 2000:
+                        await context.send(buffer)
+                        buffer = ""
+                    buffer += chunk
+                    s = s[s.find("\n")+1:]
+
+                await context.send(buffer + s)
             else:
                 await context.send("You do not have permission to use this!")
 
