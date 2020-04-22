@@ -5,13 +5,17 @@
 import json
 import os
 
+VERSION = 1.1
+MAX_STOCKS = 1000
+
 songs = '../stocks.json'
 dirname = os.path.dirname(__file__)
 filename = os.path.join(dirname, songs)
 
 if not os.path.exists(filename):
     with open(filename, "w+") as f:
-        json.dump({"accounts": {}, "stocks": {}, "sales": {}}, f)
+        json.dump({"accounts": {}, "stocks": {}, "sales": {}, "channels": {}, "version": VERSION, "alias": {},
+                   "alias_rev": {}}, f)
         f.truncate()
         f.close()
 
@@ -20,9 +24,6 @@ with open(filename, "r+") as f:
     f.close()
 
 print(db)
-
-VERSION = 1.0
-MAX_STOCKS = 1000
 
 if "accounts" not in db:
     db['accounts'] = {}
@@ -39,6 +40,11 @@ if "channels" not in db:
 if "version" not in db:
     db['version'] = VERSION
 
+if "alias" not in db:
+    db['alias'] = {}
+
+if "alias_rev" not in db:
+    db['alias_rev'] = {}
 
 
 def write():
@@ -101,6 +107,7 @@ def delete_company(name):
     if name in db['stocks']:
         company = db['stocks'].pop(name)
         acc = delete_account(name)
+        remove_alias(name)
         write()
         return company, acc
     else:
@@ -118,6 +125,8 @@ def delete_owner(uid):
 def get_company(name):
     if name in db['stocks']:
         return db['stocks'][name]
+    elif name in db['alias']:
+        return db['stock'][db['alias'][name]]
     else:
         return None
 
@@ -354,3 +363,32 @@ def get_offers_message():
 
 def get_names():
     return db['stocks'].keys()
+
+
+def get_alias(name):
+    if name in db['alias_rev']:
+        return db['alias_rev'][name]
+    else:
+        return None
+
+
+def remove_alias(name):
+    if get_alias(name) is not None:
+        db['alias'].pop(get_alias(name))
+        db['alias_rev'].pop(name)
+        write()
+        return 1
+    else:
+        return 0
+
+
+def set_alias(alias, name):
+    if get_company(name) is not None and get_company(alias) is None:
+        remove_alias(name)
+        db['alias'][alias] = name
+        db['alias_rev'][name] = alias
+        write()
+        return 1
+    else:
+        return 0
+

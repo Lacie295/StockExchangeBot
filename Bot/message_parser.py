@@ -77,7 +77,10 @@ def init(client):
                         owner = db_handler.get_owner(name)
                         owner_user = m.guild.get_member(owner)
                         revenue = db_handler.get_revenue(name)
+                        alias = db_handler.get_alias(name)
                         embed.add_field(name="Company", value=name, inline=True)
+                        if alias is not None:
+                            embed.add_field(name="Alias", value=alias, inline=True)
                         embed.add_field(name="Balance", value=str(amount) + currency, inline=True)
                         embed.add_field(name="Free Stocks", value=free, inline=True)
                         embed.add_field(name="Stock Price", value=str(price) + currency, inline=True)
@@ -384,8 +387,8 @@ def init(client):
                         uname = member.display_name if member else "USER LEFT GUILD"
                         price = requests[uid][1]
                         amount = requests[uid][0]
-                        value += uname + (" selling " if amount < 0 else " requesting ") + str(abs(amount)) + " for " + \
-                                 str(price) + currency + " per stock\n"
+                        value += uname + (" selling " if amount < 0 else " requesting ") + str(
+                            abs(amount)) + " for " + str(price) + currency + " per stock\n"
                     embed.add_field(name="Listings",
                                     value=value,
                                     inline=False)
@@ -394,7 +397,7 @@ def init(client):
                     else:
                         await context.send("No requests for " + name + ".")
             else:
-                await context.send("Please provide a company.") @ commands.command(pass_context=True)
+                await context.send("Please provide a company.")
 
         @commands.command(pass_context=True)
         async def list_all_offers(self, context):
@@ -523,7 +526,8 @@ def init(client):
                         s += "\n"
                     else:
                         owner = db_handler.get_owner(acc)
-                        c += acc + " "
+                        alias = db_handler.get_alias(acc)
+                        c += acc + (" " + "(" + alias + ") ") if alias is not None else " "
                         if owner is None:
                             c += "no owner"
                         else:
@@ -537,12 +541,12 @@ def init(client):
 
                 buffer = ""
                 while s.find("\n") > 0:
-                    chunk = s[:s.find("\n")+1]
+                    chunk = s[:s.find("\n") + 1]
                     if len(buffer + chunk) > 2000:
                         await context.send(buffer)
                         buffer = ""
                     buffer += chunk
-                    s = s[s.find("\n")+1:]
+                    s = s[s.find("\n") + 1:]
 
                 await context.send(buffer + s)
             else:
@@ -571,14 +575,14 @@ def init(client):
 
         @commands.command(pass_context=True)
         async def delete_user(self, context):
-            """Deletes an user. Owner and Admin only.
+            """Deletes an user. Admin only.
             Usage: %delete_user user_id"""
             m = context.message
             split = m.content.split(" ")
             if len(split) == 2:
                 if re.match(r_int, split[1]):
                     uid = int(split[1])
-                    if db_handler.get_owner(uid) == m.author.id or m.author.guild_permissions.administrator:
+                    if m.author.guild_permissions.administrator:
                         db_handler.delete_account(str(uid))
                         db_handler.delete_owner(uid)
                         await context.send(str(uid) + " deleted.")
@@ -589,6 +593,42 @@ def init(client):
             else:
                 await context.send("Please provide a user id!")
 
+        @commands.command(pass_context=True)
+        async def set_alias(self, context):
+            """Sets an alias for a company. Owner and Admin only.
+            Usage: %delete_user user_id"""
+            m = context.message
+            split = m.content.split(" ")
+            if len(split) == 3:
+                name = split[1]
+                alias = split[2]
+                if len(alias) == 4:
+                    if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
+                        db_handler.set_alias(alias.upper(), name)
+                        await context.send("Alias set.")
+                    else:
+                        await context.send("You do not have permission to use this!")
+                else:
+                    await context.send("Alias must be 4 letters long!")
+            else:
+                await context.send("Please provide a company and an alias!")
+
+        @commands.command(pass_context=True)
+        async def delete_alias(self, context):
+            """Deletes the alias of a company. Owner and Admin only.
+            Usage: %delete_user user_id"""
+            m = context.message
+            split = m.content.split(" ")
+            if len(split) == 2:
+                name = split[1]
+                if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
+                    db_handler.remove_alias(name)
+                    await context.send("Alias set.")
+                else:
+                    await context.send("You do not have permission to use this!")
+            else:
+                await context.send("Please provide a company!")
+
     async def update_offers():
         gid, cid, mid = db_handler.get_offers_message()
         guild = client.get_guild(gid)
@@ -598,6 +638,7 @@ def init(client):
         embed = discord.Embed(title="All offers", colour=discord.Colour.dark_gold())
         for name in names:
             stemp = ""
+            alias = db_handler.get_alias(name)
             requests = db_handler.get_requests(name)
             free = db_handler.get_free_stocks(name)
             if requests is None:
@@ -614,7 +655,8 @@ def init(client):
                         stemp += "\t" + "USER LEFT GUILD"
                     stemp += temp + str(amount) + " stocks at " + str(price) + currency + " a piece.\n"
             stemp += "Available stocks: " + str(free)
-            embed.add_field(name="Offers for " + name, value=stemp, inline=False)
+            embed.add_field(name="Offers for " + name + (" (" + alias + ")") if alias is not None else "", value=stemp,
+                            inline=False)
         await message.edit(content="", embed=embed)
 
     client.add_cog(Stock())
