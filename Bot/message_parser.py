@@ -68,6 +68,8 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 2:
                     name = split[1]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     amount = db_handler.get_account(name)
                     if amount is not None:
                         embed = discord.Embed(title="Company data", colour=discord.Colour.blue())
@@ -144,6 +146,8 @@ def init(client):
             split = m.content.split(" ")
             if len(split) == 3 and len(m.mentions) == 1:
                 name = split[1]
+                if db_handler.reverse_alias(name) is not None:
+                    name = db_handler.reverse_alias(name)
                 mention = m.mentions[0]
                 if db_handler.get_account(str(mention.id)) is not None:
                     if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
@@ -166,6 +170,8 @@ def init(client):
             split = m.content.split(" ")
             if len(split) == 3:
                 name = split[1]
+                if db_handler.reverse_alias(name) is not None:
+                    name = db_handler.reverse_alias(name)
                 if re.match(r_float, split[2]):
                     price = float(split[2])
                     if db_handler.set_price(name, price):
@@ -198,6 +204,8 @@ def init(client):
                         await context.send("2nd parameter must be a number.")
                 elif len(split) == 3:
                     name = split[1]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     if re.match(r_float, split[2]):
                         amount = float(split[2])
                         if db_handler.get_account(name) is not None:
@@ -237,6 +245,8 @@ def init(client):
                         await context.send("2nd parameter must be a number.")
                 elif len(split) == 3:
                     name = split[1]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     if re.match(r_float, split[2]):
                         amount = float(split[2])
                         if db_handler.get_account(name) is not None and db_handler.get_account(name) >= amount:
@@ -262,6 +272,8 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 3:
                     name = split[1]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     if db_handler.get_owner(name) == m.author.id:
                         await context.send("You can't invest in your own company.")
                     else:
@@ -288,6 +300,8 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 4:
                     name = split[1]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     if db_handler.get_stocks(name) is None:
                         await context.send("Company doesn't exist.")
                     else:
@@ -316,6 +330,8 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 4:
                     name = split[1]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     if db_handler.get_stocks(name) is None:
                         await context.send("Company doesn't exist.")
                     else:
@@ -347,6 +363,8 @@ def init(client):
                     sid = str(s.id)
                     bid = str(m.author.id)
                     name = split[2]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     if re.match(r_int, split[3]):
                         if sid == bid:
                             await context.send("Cannot do a transaction with yourself.")
@@ -423,6 +441,8 @@ def init(client):
                 split = m.content.split(" ")
                 if len(split) == 2:
                     name = split[1]
+                    if db_handler.reverse_alias(name) is not None:
+                        name = db_handler.reverse_alias(name)
                     uid = str(m.author.id)
                     result = db_handler.remove_request(uid, name)
                     if result:
@@ -466,6 +486,8 @@ def init(client):
             split = m.content.split(" ")
             if len(split) == 3:
                 name = split[1]
+                if db_handler.reverse_alias(name) is not None:
+                    name = db_handler.reverse_alias(name)
                 if m.author.guild_permissions.administrator:
                     if re.match(r_int, split[2]):
                         amount = int(split[2])
@@ -490,6 +512,8 @@ def init(client):
             split = m.content.split(" ")
             if len(split) == 3:
                 name = split[1]
+                if db_handler.reverse_alias(name) is not None:
+                    name = db_handler.reverse_alias(name)
                 if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
                     if re.match(r_float, split[2]):
                         amount = float(split[2])
@@ -560,6 +584,8 @@ def init(client):
             split = m.content.split(" ")
             if len(split) == 2:
                 name = split[1]
+                if db_handler.reverse_alias(name) is not None:
+                    name = db_handler.reverse_alias(name)
                 if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
                     price = db_handler.get_price(name)
                     stocks = db_handler.get_stocks(name)

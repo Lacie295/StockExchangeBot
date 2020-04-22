@@ -75,6 +75,9 @@ def delete_account(uid):
 
 
 def get_account(uid):
+    alias = reverse_alias(uid)
+    if alias is not None:
+        uid = alias
     if uid in db['accounts']:
         return db['accounts'][uid]
     else:
@@ -82,12 +85,18 @@ def get_account(uid):
 
 
 def deposit(uid, amount):
+    alias = reverse_alias(uid)
+    if alias is not None:
+        uid = alias
     db['accounts'][uid] += amount
     db['accounts'][uid] = round(db['accounts'][uid] * 100) / 100
     write()
 
 
 def withdraw(uid, amount):
+    alias = reverse_alias(uid)
+    if alias is not None:
+        uid = alias
     db['accounts'][uid] -= amount
     db['accounts'][uid] = round(db['accounts'][uid] * 100) / 100
     write()
@@ -126,38 +135,47 @@ def get_company(name):
     if name in db['stocks']:
         return db['stocks'][name]
     elif name in db['alias']:
-        return db['stock'][db['alias'][name]]
+        return db['stocks'][db['alias'][name]]
     else:
         return None
 
 
-def get_price(name):
+def get_stock_data(name, n):
     if name in db['stocks']:
-        return db['stocks'][name][0]
+        return db['stocks'][name][n]
+    elif name in db['alias']:
+        return db['stocks'][db['alias'][name]][n]
     else:
         return None
 
 
-def set_price(name, price):
+def set_stock_data(name, n, value):
     if name in db['stocks']:
-        db['stocks'][name][0] = price
+        db['stocks'][name][n] = value
+        write()
+        return 1
+    elif name in db['alias']:
+        db['stocks'][db['alias'][name]][n] = value
+        write()
         return 1
     else:
         return 0
 
 
+def get_price(name):
+    return get_stock_data(name, 0)
+
+
+def set_price(name, price):
+    return set_stock_data(name, 0, price)
+
+
 def get_free_stocks(name):
-    if name in db['stocks']:
-        return db['stocks'][name][1]
-    else:
-        return None
+    return get_stock_data(name, 1)
 
 
 def get_stocks(name):
-    if name in db['stocks']:
-        return db['stocks'][name][2]
-    else:
-        return None
+    return get_stock_data(name, 2)
 
 
 def get_user_stocks(uid):
@@ -172,35 +190,19 @@ def get_user_stocks(uid):
 
 
 def get_owner(name):
-    if name in db['stocks']:
-        return db['stocks'][name][3]
-    else:
-        return None
+    return get_stock_data(name, 3)
 
 
 def set_owner(name, uid):
-    if name in db['stocks']:
-        db['stocks'][name][3] = uid
-        write()
-        return 1
-    else:
-        return 0
+    return set_stock_data(name, 3, uid)
 
 
 def get_revenue(name):
-    if name in db['stocks']:
-        return db['stocks'][name][4]
-    else:
-        return None
+    return get_stock_data(name, 4)
 
 
 def set_revenue(name, revenue):
-    if name in db['stocks']:
-        db['stocks'][name][4] = revenue
-        write()
-        return 1
-    else:
-        return 0
+    return set_stock_data(name, 4, revenue)
 
 
 def assign_stocks(name, uid, amount):
@@ -372,6 +374,13 @@ def get_alias(name):
         return None
 
 
+def reverse_alias(name):
+    if name in db['alias']:
+        return db['alias'][name]
+    else:
+        return None
+
+
 def remove_alias(name):
     if get_alias(name) is not None:
         db['alias'].pop(get_alias(name))
@@ -391,4 +400,3 @@ def set_alias(alias, name):
         return 1
     else:
         return 0
-
