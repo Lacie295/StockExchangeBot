@@ -551,7 +551,7 @@ def init(client):
                     else:
                         owner = db_handler.get_owner(acc)
                         alias = db_handler.get_alias(acc)
-                        c += acc + (" " + "(" + alias + ") ") if alias is not None else " "
+                        c += acc + (" " + "(" + alias + ") " if alias is not None else " ")
                         if owner is None:
                             c += "no owner"
                         else:
@@ -681,7 +681,7 @@ def init(client):
                         stemp += "\t" + "USER LEFT GUILD"
                     stemp += temp + str(amount) + " stocks at " + str(price) + currency + " a piece.\n"
             stemp += "Available stocks: " + str(free)
-            embed.add_field(name="Offers for " + name + (" (" + alias + ")") if alias is not None else "", value=stemp,
+            embed.add_field(name="Offers for " + name + (" (" + alias + ")" if alias is not None else ""), value=stemp,
                             inline=False)
         await message.edit(content="", embed=embed)
 
