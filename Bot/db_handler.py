@@ -131,10 +131,10 @@ def delete_owner(uid):
     write()
 
 
-def get_company(name):
+def get_company(name, alias=True):
     if name in db['stocks']:
         return db['stocks'][name]
-    elif name in db['alias']:
+    elif name in db['alias'] and alias:
         return db['stocks'][db['alias'][name]]
     else:
         return None
@@ -392,7 +392,7 @@ def remove_alias(name):
 
 
 def set_alias(alias, name):
-    if get_company(name) is not None and get_company(alias) is None:
+    if get_company(name, False) is not None and get_company(alias) is None:
         remove_alias(name)
         db['alias'][alias] = name
         db['alias_rev'][name] = alias

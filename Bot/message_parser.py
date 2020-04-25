@@ -630,8 +630,10 @@ def init(client):
                 alias = split[2]
                 if len(alias) == 4:
                     if db_handler.get_owner(name) == m.author.id or m.author.guild_permissions.administrator:
-                        db_handler.set_alias(alias.upper(), name)
-                        await context.send("Alias set.")
+                        if db_handler.set_alias(alias.upper(), name):
+                            await context.send("Alias set.")
+                        else:
+                            await context.send("Company doesn't exist.")
                     else:
                         await context.send("You do not have permission to use this!")
                 else:
