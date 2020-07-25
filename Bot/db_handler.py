@@ -47,9 +47,11 @@ if "alias_rev" not in db:
     db['alias_rev'] = {}
 
 for name in db['stocks']:
+    stocks = {}
     for owner in db['stocks'][name][2]:
-        if db['stocks'][name][2][owner] <= 0:
-            db['stocks'][name][2].pop(owner)
+        if db['stocks'][name][2][owner] > 0:
+            stocks[owner] = db['stocks'][name][2][owner]
+    db['stocks'][name][2] = stocks
 
 
 def write():
