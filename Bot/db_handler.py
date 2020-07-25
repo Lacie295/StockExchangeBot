@@ -46,12 +46,20 @@ if "alias" not in db:
 if "alias_rev" not in db:
     db['alias_rev'] = {}
 
+for name in db['stocks']:
+    for owner in db['stocks'][name][2]:
+        if db['stocks'][name][2][owner] <= 0:
+            db['stocks'][name][2].pop(owner)
+
 
 def write():
     with open(filename, "w+") as file:
         json.dump(db, file)
         file.truncate()
         file.close()
+
+
+write()
 
 
 def add_account(uid):

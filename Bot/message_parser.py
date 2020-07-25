@@ -280,8 +280,11 @@ def init(client):
                         if re.match(r_int, split[2]):
                             amount = int(split[2])
                             if db_handler.buy_stock(name, str(m.author.id), amount):
-                                await context.send("Stocks bought.")
-                                await update_offers()
+                                if amount <= 0:
+                                    await context.send("Amount must be positive.")
+                                else:
+                                    await context.send("Stocks bought.")
+                                    await update_offers()
                             else:
                                 await context.send("Not enough funds or stocks left to buy.")
                         else:
@@ -309,9 +312,12 @@ def init(client):
                             amount = int(split[2])
                             price = float(split[3])
                             if db_handler.add_request(str(m.author.id), name, -amount, price):
-                                await context.send(str(amount) + " " + name + " stocks set for sale at " + str(
-                                    price) + currency + " a piece.")
-                                await update_offers()
+                                if amount <= 0:
+                                    await context.send("Amount must be positive.")
+                                else:
+                                    await context.send(str(amount) + " " + name + " stocks set for sale at " + str(
+                                        price) + currency + " a piece.")
+                                    await update_offers()
                             else:
                                 await context.send("Not enough stocks left to sell.")
                         else:
@@ -339,9 +345,12 @@ def init(client):
                             amount = int(split[2])
                             price = float(split[3])
                             if db_handler.add_request(str(m.author.id), name, amount, price):
-                                await context.send("Request set for " + str(amount) + " " + name + " stocks at " + str(
-                                    price) + currency + " a piece.")
-                                await update_offers()
+                                if amount <= 0:
+                                    await context.send("Amount must be positive.")
+                                else:
+                                    await context.send("Request set for " + str(amount) + " " + name + " stocks at " +
+                                                       str(price) + currency + " a piece.")
+                                    await update_offers()
                             else:
                                 await context.send("Not enough stocks left to sell.")
                         else:
