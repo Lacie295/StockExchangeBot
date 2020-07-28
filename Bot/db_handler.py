@@ -279,7 +279,7 @@ def sell_stock(name, uid, amount):
 def add_request(uid, name, amount, price):
     # if amount < 0, uid is selling, check if -amount < owned stocks
     stocks = get_stocks(name)
-    if stocks is not None and ((uid in stocks and -amount <= stocks[uid]) or amount <= 100) and amount != 0:
+    if stocks is not None and len(stocks) != 0 and ((uid in stocks and -amount <= stocks[uid]) or amount <= 100) and amount != 0:
         if name not in db['sales']:
             db['sales'][name] = {}
         db['sales'][name][uid] = (amount, price)

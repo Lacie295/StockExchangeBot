@@ -145,7 +145,7 @@ def init(client):
             m = context.message
             split = m.content.split(" ")
             if len(split) == 3 and len(m.mentions) == 1:
-                name = split[1]
+                name = " ".join(split[2:])
                 if db_handler.reverse_alias(name) is not None:
                     name = db_handler.reverse_alias(name)
                 mention = m.mentions[0]
